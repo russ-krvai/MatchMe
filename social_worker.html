@@ -1,174 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Social Worker — StepDownMatch</title>
+  <title>Patient Details</title>
   <link rel="stylesheet" href="style_light.css"/>
-  <script defer src="https://esm.sh/@supabase/supabase-js@2"></script>
-  <script defer src="config.js"></script>
-  <script defer src="supabase.js"></script>
   <script defer src="sw_ui.js"></script>
 </head>
 <body>
-  <header class="appbar">
-    <div class="brand">StepDownMatch — Social Worker</div>
-    <nav>
-      <a href="index.html" class="back-link">← Home</a>
-      <a href="facility.html">Facility</a>
-      <a href="admin.html">Admin</a>
-    </nav>
-  </header>
-  <main>
-    <div class="grid">
-      <aside class="card">
-        <div class="filter-header">
-          <h2>Patient Details</h2>
-          <div class="muted" id="activeFiltersCount">Active filters (0)</div>
-        </div>
+  <div class="container">
+    <aside class="sidebar">
+      <h2>Patient Details</h2>
+      <form id="filterForm">
+        <label>Patient Zip Code:
+          <input type="text" name="zip" placeholder="e.g. 12345"/>
+        </label>
 
-        <div class="row">
-          <div>
-            <label>Target setting</label>
-            <select data-k="type" class="with-other">
-              <option>Any</option>
-              <option>LTACH</option>
-              <option>Acute Rehab</option>
-              <option>SNF</option>
-              <option>Home Health</option>
-              <option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Describe other setting"/>
-          </div>
-          <div>
-            <label>ZIP code</label>
-            <input data-k="zip" type="text" placeholder="e.g., 52241"/>
-          </div>
-        </div>
+        <label>Facility Type:
+          <select name="facilityType">
+            <option value="">Any Type</option>
+            <option>LTACH</option>
+            <option>Acute Rehab</option>
+            <option>SNF</option>
+            <option>Home Health</option>
+            <option>Other</option>
+          </select>
+          <input type="text" name="facilityTypeOther" placeholder="Specify other..." class="hidden"/>
+        </label>
 
-        <div class="row">
-          <div>
-            <label>Payer</label>
-            <select class="with-other">
-              <option>Any</option><option>Medicare</option><option>Medicaid</option><option>Commercial</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Enter payer"/>
-          </div>
-          <div>
-            <label>Plan</label>
-            <select class="with-other">
-              <option>Any</option><option>Traditional</option><option>Advantage</option><option>MCO</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Enter plan"/>
-          </div>
-        </div>
+        <label>Mobility:
+          <select name="mobility">
+            <option value="">Any</option>
+            <option>Independent</option>
+            <option>Assist</option>
+            <option>Bed Bound</option>
+            <option>Other</option>
+          </select>
+          <input type="text" name="mobilityOther" placeholder="Specify other..." class="hidden"/>
+        </label>
 
-        <div class="row">
-          <div>
-            <label>IV antibiotics</label>
-            <select class="with-other">
-              <option>Any</option><option>q24h</option><option>q12h</option><option>q8h</option><option>Continuous</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Specify schedule"/>
-          </div>
-          <div>
-            <label>Wound care</label>
-            <select class="with-other">
-              <option>Any</option><option>Wound vac</option><option>Daily dressings</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Describe wound care"/>
-          </div>
-        </div>
+        <label>Diagnosis:
+          <select name="diagnosis">
+            <option value="">Any</option>
+            <option>Stroke</option>
+            <option>Fracture</option>
+            <option>Cardiac</option>
+            <option>Respiratory</option>
+            <option>Other</option>
+          </select>
+          <input type="text" name="diagnosisOther" placeholder="Specify other..." class="hidden"/>
+        </label>
 
-        <div class="row">
-          <div>
-            <label>Feeding tube</label>
-            <select class="with-other">
-              <option>Any</option><option>NG/DHT</option><option>PEG</option><option>None</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Describe feeding needs"/>
-          </div>
-          <div>
-            <label>TPN</label>
-            <select class="with-other">
-              <option>Any</option><option>Yes</option><option>No</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Details"/>
-          </div>
-        </div>
+        <button type="submit">Search</button>
+      </form>
+    </aside>
 
-        <div class="row">
-          <div>
-            <label>Dialysis</label>
-            <select class="with-other">
-              <option>Any</option><option>Hemodialysis (HD)</option><option>Peritoneal (PD)</option><option>HD & PD</option><option>None</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Schedule / modality"/>
-          </div>
-          <div>
-            <label>Ostomy</label>
-            <select class="with-other">
-              <option>Any</option><option>Yes</option><option>No</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Type"/>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Central line</label>
-            <select class="with-other">
-              <option>Any</option><option>PICC</option><option>Tunneled</option><option>Port</option><option>None</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Details"/>
-          </div>
-          <div>
-            <label>Oxygen</label>
-            <select class="with-other">
-              <option>Any</option><option>Nasal cannula</option><option>HFNC</option><option>Trach collar</option><option>BiPAP/CPAP</option><option>Vent</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Flow / device"/>
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Mobility</label>
-            <select class="with-other">
-              <option>Any</option><option>Independent</option><option>Assist</option><option>Bed Bound</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Details"/>
-          </div>
-          <div>
-            <label>Behavior / Sitter</label>
-            <select class="with-other">
-              <option>Any</option><option>VMU required</option><option>Sitter acceptable</option><option>None</option><option>Other</option>
-            </select>
-            <input class="other-input" type="text" placeholder="Behavioral needs"/>
-          </div>
-        </div>
-
-        <div class="controls">
-          <button id="btn-search" type="button">Search</button>
-          <button id="btn-clear" type="button" class="secondary">Clear</button>
-        </div>
-      </aside>
-
-      <section class="card">
-        <div class="filter-header">
-          <h2>Matching facilities <span id="matchCount" class="muted"></span></h2>
-          <div>
-            <label class="muted" style="margin-right:6px">Sort</label>
-            <select id="sortMode">
-              <option value="best">Best match</option>
-              <option value="nearest">Nearest (ZIP prefix)</option>
-              <option value="recent">Most recent</option>
-            </select>
-          </div>
-        </div>
-        <div id="results"></div>
-      </section>
-    </div>
-  </main>
+    <main class="main-content">
+      <div class="filters-summary">
+        Active Filters: <span id="activeFiltersCount">0</span>
+      </div>
+      <div id="results"></div>
+    </main>
+  </div>
 </body>
 </html>
