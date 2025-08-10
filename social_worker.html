@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Social Worker — StepDownMatch</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script defer src="https://esm.sh/@supabase/supabase-js@2"></script>
+  <script defer src="config.js"></script>
+  <script defer src="supabase.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Social Worker Portal</h1>
+    <a href="index.html" class="back-link">← Back to Home</a>
+  </header>
+  <main>
+    <form id="patientForm" class="card">
+      <div class="row">
+        <label>Patient ZIP
+          <input type="text" id="sw-zip" placeholder="e.g., 52241"/>
+        </label>
+        <label>Facility Type
+          <select id="sw-type">
+            <option>Any Type</option>
+            <option>LTACH</option>
+            <option>Acute Rehab</option>
+            <option>SNF</option>
+            <option>Home Health</option>
+          </select>
+        </label>
+      </div>
+      <label>Keywords (capabilities/notes)
+        <input type="text" id="sw-kw" placeholder="e.g., HD, PD, wound vac, VMU"/>
+      </label>
+      <div class="row">
+        <button type="submit">Find Facilities</button>
+        <button type="button" id="btn-clear" class="secondary">Clear</button>
+      </div>
+      <small class="hint">Matches on type, ZIP prefix (first 3 digits), and keywords across dialysis/behavior/tube/IV/notes.</small>
+    </form>
+
+    <section id="resultsWrap" class="card" style="display:none;margin-top:18px;">
+      <h2>Matching Facilities</h2>
+      <div id="results"></div>
+    </section>
+  </main>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('patientForm');
+    const resultsWrap = document.getElementById('resultsWrap');
+    const results = document.getElementById('results');
+    document.getElementById('btn-clear').onclick = () => {
+      document.getElementById('sw-zip').value='';
+      document.getElementById('sw-type').value='Any Type';
+      document.getElementById('sw-kw').value='';
+      resultsWrap.style.display='none'; results.innerHTML='';
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const zip = document.getElementById('sw-zip').value.trim();
+      const type = document.getElementById('sw-type').value;
+      const kw = document.getElementById('sw-kw').value.trim().toLowerCase();
+
+      resultsWrap.style.display='block';
+      results.innerHTML = '<div class="muted">Searching…</div>';
+
+      try {
+        const list = await DB.fetchFacilities({ zip, type, kw });
+        if (!list.length) { results.innerHTML = '<div class="muted">No facilities matched.</div>'; return; }
+        results.innerHTML = '';
+        list.forEach(m => {
+          const el = document.createElement('div');
+          el.className='facility';
+          el.innerHTML = '<div><strong>'+m.name+'</strong>' +
+            '<div class="meta">'+m.type+' • '+(m.city||'')+' • ZIP '+(m.zip||'')+'</div>' +
+            '<div class="meta">Dialysis: '+(m.dialysis||'—')+' • Behavior: '+(m.behavior||'—')+' • Tube: '+(m.tube||'—')+' • IV: '+(m.iv||'—')+' • WoundVac: '+(m.woundVac||'—')+' • TPN: '+(m.tpn||'—')+'</div>' +
+            '<div class="meta">Insurances: '+(m.insurances||'—')+'</div>' +
+            '<div class="meta">Notes: '+(m.notes||'—')+'</div>' +
+            '</div><div class="score">'+(m._score||0)+'</div>';
+          results.appendChild(el);
+        });
+      } catch (err) {
+        results.innerHTML = '<div class="muted">Error: '+(err.message||err)+'</div>';
+      }
+    });
+  });
+  </script>
+</body>
+</html>

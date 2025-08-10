@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Facility — StepDownMatch</title>
+  <link rel="stylesheet" href="style.css"/>
+  <script defer src="https://esm.sh/@supabase/supabase-js@2"></script>
+  <script defer src="config.js"></script>
+  <script defer src="supabase.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Facility Registration</h1>
+    <a href="index.html" class="back-link">← Back to Home</a>
+  </header>
+  <main>
+    <form id="facilityForm" class="card">
+      <div class="row">
+        <label>Facility Name
+          <input type="text" id="f-name" required/>
+        </label>
+        <label>Facility Type
+          <select id="f-type">
+            <option>LTACH</option>
+            <option>Acute Rehab</option>
+            <option>SNF</option>
+            <option>Home Health</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>City, State
+          <input type="text" id="f-city" placeholder="e.g., Coralville, IA"/>
+        </label>
+        <label>ZIP
+          <input type="text" id="f-zip" placeholder="e.g., 52241"/>
+        </label>
+      </div>
+      <div class="row">
+        <label>Dialysis
+          <select id="f-dialysis">
+            <option>None</option>
+            <option>Hemodialysis (HD)</option>
+            <option>Peritoneal Dialysis (PD)</option>
+            <option>HD & PD</option>
+          </select>
+        </label>
+        <label>Behavioral Support
+          <select id="f-behavior">
+            <option>None</option>
+            <option>VMU/1:1 sitter</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Feeding Tube
+          <select id="f-tube">
+            <option>None</option>
+            <option>NG/DHT</option>
+            <option>PEG only</option>
+          </select>
+        </label>
+        <label>IV Antibiotics supported
+          <select id="f-iv">
+            <option>None</option>
+            <option>q24h</option>
+            <option>q12h</option>
+            <option>q8h</option>
+            <option>Continuous</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Wound-Vac
+          <select id="f-wv">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </label>
+        <label>TPN
+          <select id="f-tpn">
+            <option>No</option>
+            <option>Yes</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Insurances
+          <input type="text" id="f-ins" placeholder="e.g., Medicare, Iowa Medicaid"/>
+        </label>
+        <label>Notes / Specialties
+          <input type="text" id="f-notes" placeholder="e.g., wound vac, trach, HD M/W/F"/>
+        </label>
+      </div>
+      <div class="row">
+        <button type="submit">Register Facility</button>
+        <button type="button" id="btn-clear-fac" class="secondary">Clear Form</button>
+      </div>
+      <small class="hint">Submitting writes to the shared Supabase database.</small>
+    </form>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>Recently Registered</h2>
+      <div id="reg-list"></div>
+    </section>
+  </main>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('facilityForm');
+    const listDiv = document.getElementById('reg-list');
+
+    async function refresh(){
+      const list = await DB.latestFacilities();
+      DB.renderFacilityList(listDiv, list);
+    }
+    refresh();
+
+    document.getElementById('btn-clear-fac').onclick = () => form.reset();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rec = {
+        name: document.getElementById('f-name').value.trim(),
+        type: document.getElementById('f-type').value,
+        city: document.getElementById('f-city').value.trim(),
+        zip: document.getElementById('f-zip').value.trim(),
+        dialysis: document.getElementById('f-dialysis').value,
+        behavior: document.getElementById('f-behavior').value,
+        tube: document.getElementById('f-tube').value,
+        iv: document.getElementById('f-iv').value,
+        wound_vac: document.getElementById('f-wv').value,
+        tpn: document.getElementById('f-tpn').value,
+        insurances: document.getElementById('f-ins').value.trim(),
+        notes: document.getElementById('f-notes').value.trim()
+      };
+      if(!rec.name){ alert('Facility name is required'); return; }
+      try{
+        await DB.insertFacility(rec);
+        alert('Facility registered. It is now searchable by social workers.');
+        form.reset();
+        refresh();
+      }catch(err){
+        alert('Error: '+(err.message||err));
+      }
+    });
+  });
+  </script>
+</body>
+</html>
