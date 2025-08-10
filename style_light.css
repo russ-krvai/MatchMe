@@ -1,0 +1,31 @@
+
+:root{
+  --bg:#f7f8fa; --panel:#ffffff; --border:#e5e7eb; --muted:#6b7280; --text:#0f172a;
+  --primary:#0f172a; --primary-contrast:#ffffff; --chip:#e9eef8;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.appbar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--border);display:flex;gap:16px;align-items:center;justify-content:space-between;padding:12px 20px}
+.appbar .brand{font-weight:700}
+.appbar nav a{margin:0 8px;color:var(--muted);text-decoration:none}
+.appbar nav a.active{color:var(--text);font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:20px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+h1,h2{margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+select,input,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--text)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:980px){.row{grid-template-columns:1fr}}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+button{background:var(--primary);color:var(--primary-contrast);border:none;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+button.secondary{background:#1118270d;color:#111827;border:1px solid var(--border)}
+.facility{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;background:#fff}
+.facility .meta{font-size:12px;color:var(--muted)}
+.score{font-weight:700;border:1px solid var(--border);padding:6px 10px;border-radius:10px;background:var(--chip)}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--chip);font-size:12px;margin-right:6px}
+.muted{color:var(--muted);font-size:13px}
+.other-input{display:none;margin-top:6px}
+.filter-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.back-link{color:#334155;text-decoration:none}
