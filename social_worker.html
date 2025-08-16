@@ -1,66 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Patient Details</title>
+  <title>Social Worker — StepDownMatch</title>
+
+  <!-- Light Canvas-style theme -->
   <link rel="stylesheet" href="style_light.css"/>
-  <script defer src="sw_ui.js"></script>
+
+  <!-- Supabase + your config + DB helper already in repo -->
+  <script defer src="https://esm.sh/@supabase/supabase-js@2"></script>
+  <script defer src="config.js"></script>
+  <script defer src="supabase.js"></script>
 </head>
 <body>
-  <div class="container">
-    <aside class="sidebar">
-      <h2>Patient Details</h2>
-      <form id="filterForm">
-        <label>Patient Zip Code:
-          <input type="text" name="zip" placeholder="e.g. 12345"/>
-        </label>
+  <!-- Top bar -->
+  <header class="appbar">
+    <div class="brand">StepDownMatch — Social Worker</div>
+    <nav>
+      <a href="index.html" class="back-link">← Home</a>
+      <a href="facility.html">Facility</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
 
-        <label>Facility Type:
-          <select name="facilityType">
-            <option value="">Any Type</option>
-            <option>LTACH</option>
-            <option>Acute Rehab</option>
-            <option>SNF</option>
-            <option>Home Health</option>
-            <option>Other</option>
-          </select>
-          <input type="text" name="facilityTypeOther" placeholder="Specify other..." class="hidden"/>
-        </label>
+  <main>
+    <div class="grid">
+      <!-- LEFT: Patient Details (filters) -->
+      <aside class="card">
+        <div class="filter-header">
+          <h2>Patient Details</h2>
+          <div class="muted" id="activeFiltersCount">Active filters (0)</div>
+        </div>
 
-        <label>Mobility:
-          <select name="mobility">
-            <option value="">Any</option>
-            <option>Independent</option>
-            <option>Assist</option>
-            <option>Bed Bound</option>
-            <option>Other</option>
-          </select>
-          <input type="text" name="mobilityOther" placeholder="Specify other..." class="hidden"/>
-        </label>
+        <!-- Row 1 -->
+        <div class="row">
+          <div>
+            <label>Target setting</label>
+            <select data-k="type" class="with-other">
+              <option>Any</option>
+              <option>LTACH</option>
+              <option>Acute Rehab</option>
+              <option>SNF</option>
+              <option>Home Health</option>
+              <option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Describe other setting"/>
+          </div>
+          <div>
+            <label>ZIP code</label>
+            <input data-k="zip" type="text" placeholder="e.g., 52241"/>
+          </div>
+        </div>
 
-        <label>Diagnosis:
-          <select name="diagnosis">
-            <option value="">Any</option>
-            <option>Stroke</option>
-            <option>Fracture</option>
-            <option>Cardiac</option>
-            <option>Respiratory</option>
-            <option>Other</option>
-          </select>
-          <input type="text" name="diagnosisOther" placeholder="Specify other..." class="hidden"/>
-        </label>
+        <!-- Row 2 -->
+        <div class="row">
+          <div>
+            <label>Payer</label>
+            <select class="with-other">
+              <option>Any</option><option>Medicare</option><option>Medicaid</option><option>Commercial</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Enter payer"/>
+          </div>
+          <div>
+            <label>Plan</label>
+            <select class="with-other">
+              <option>Any</option><option>Traditional</option><option>Advantage</option><option>MCO</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Enter plan"/>
+          </div>
+        </div>
 
-        <button type="submit">Search</button>
-      </form>
-    </aside>
+        <!-- Row 3 -->
+        <div class="row">
+          <div>
+            <label>IV antibiotics</label>
+            <select class="with-other">
+              <option>Any</option><option>q24h</option><option>q12h</option><option>q8h</option><option>Continuous</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Specify schedule"/>
+          </div>
+          <div>
+            <label>Wound care</label>
+            <select class="with-other">
+              <option>Any</option><option>Wound vac</option><option>Daily dressings</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Describe wound care"/>
+          </div>
+        </div>
 
-    <main class="main-content">
-      <div class="filters-summary">
-        Active Filters: <span id="activeFiltersCount">0</span>
-      </div>
-      <div id="results"></div>
-    </main>
-  </div>
+        <!-- Row 4 -->
+        <div class="row">
+          <div>
+            <label>Feeding tube</label>
+            <select class="with-other">
+              <option>Any</option><option>NG/DHT</option><option>PEG</option><option>None</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Describe feeding needs"/>
+          </div>
+          <div>
+            <label>TPN</label>
+            <select class="with-other">
+              <option>Any</option><option>Yes</option><option>No</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Details"/>
+          </div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="row">
+          <div>
+            <label>Dialysis</label>
+            <select class="with-other">
+              <option>Any</option><option>Hemodialysis (HD)</option><option>Peritoneal (PD)</option><option>HD & PD</option><option>None</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Schedule / modality"/>
+          </div>
+          <div>
+            <label>Ostomy</label>
+            <select class="with-other">
+              <option>Any</option><option>Yes</option><option>No</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Type"/>
+          </div>
+        </div>
+
+        <!-- Row 6 -->
+        <div class="row">
+          <div>
+            <label>Central line</label>
+            <select class="with-other">
+              <option>Any</option><option>PICC</option><option>Tunneled</option><option>Port</option><option>None</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Details"/>
+          </div>
+          <div>
+            <label>Oxygen</label>
+            <select class="with-other">
+              <option>Any</option><option>Nasal cannula</option><option>HFNC</option><option>Trach collar</option><option>BiPAP/CPAP</option><option>Vent</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Flow / device"/>
+          </div>
+        </div>
+
+        <!-- Row 7 -->
+        <div class="row">
+          <div>
+            <label>Mobility</label>
+            <select class="with-other">
+              <option>Any</option><option>Independent</option><option>Assist</option><option>Bed Bound</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Details"/>
+          </div>
+          <div>
+            <label>Behavior / Sitter</label>
+            <select class="with-other">
+              <option>Any</option><option>VMU required</option><option>Sitter acceptable</option><option>None</option><option>Other</option>
+            </select>
+            <input class="other-input" type="text" placeholder="Behavioral needs"/>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="btn-search" type="button">Search</button>
+          <button id="btn-clear" type="button" class="secondary">Clear</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT: Results -->
+      <section class="card">
+        <div class="filter-header">
+          <h2>Matching facilities <span id="matchCount" class="muted"></span></h2>
+          <div>
+            <label class="muted" style="margin-right:6px">Sort</label>
+            <select id="sortMode">
+              <option value="best">Best match</option>
+              <option value="nearest">Nearest (ZIP prefix)</option>
+              <option value="recent">Most recent</option>
+            </select>
+          </div>
+        </div>
+        <div id="results"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Page logic: “Other” reveals text box + Supabase search via your existing DB helper -->
+  <script>
+  (function(){
+    function showHideOther(select){
+      const other = select.parentElement.querySelector('.other-input');
+      if(!other) return;
+      other.style.display = (select.value === 'Other') ? 'block' : 'none';
+      if(select.value !== 'Other') other.value = '';
+    }
+
+    function collectFilters(){
+      const pane = document.querySelector('aside');
+      const selects = Array.from(pane.querySelectorAll('select'));
+      const data = { type:'Any', zip:'', kw:[] };
+
+      const typeSel = pane.querySelector('select[data-k="type"]');
+      if(typeSel) data.type = typeSel.value || 'Any';
+
+      const zipIn = pane.querySelector('input[data-k="zip"]');
+      if(zipIn) data.zip = zipIn.value.trim();
+
+      selects.forEach(sel => {
+        if(sel.hasAttribute('data-k')) return;
+        const val = sel.value;
+        if(val === 'Other'){
+          const other = sel.parentElement.querySelector('.other-input');
+          if(other && other.value.trim()) data.kw.push(other.value.trim());
+        }else if(val && val !== 'Any'){
+          data.kw.push(val);
+        }
+      });
+
+      return { type: data.type, zip: data.zip, kw: data.kw.join(' ') };
+    }
+
+    function render(list){
+      const out = document.getElementById('results');
+      const count = document.getElementById('matchCount');
+      out.innerHTML = '';
+      count.textContent = list.length ? '(' + list.length + ')' : '';
+      if(!list.length){
+        out.innerHTML = '<div class="muted">No facilities matched the current criteria.</div>';
+        return;
+      }
+      list.forEach(m => {
+        const el = document.createElement('div'); el.className='facility';
+        el.innerHTML =
+          '<div><strong>'+m.name+'</strong>' +
+          '<div class="meta"><span class="badge">'+m.type+'</span> ZIP '+(m.zip||'')+'</div>' +
+          '<div class="meta">Dialysis: '+(m.dialysis||'—')+' • Behavior: '+(m.behavior||'—')+
+          ' • Tube: '+(m.tube||'—')+' • IV: '+(m.iv||'—')+' • WoundVac: '+(m.woundVac||'—')+' • TPN: '+(m.tpn||'—')+'</div>' +
+          '<div class="meta">Insurances: '+(m.insurances||'—')+'</div>' +
+          '<div class="meta">Notes: '+(m.notes||'—')+'</div>' +
+          '</div><div class="score">'+(m._score||0)+'</div>';
+        out.appendChild(el);
+      });
+    }
+
+    async function search(){
+      const f = collectFilters();
+      let list = await DB.fetchFacilities({
+        zip: f.zip,
+        type: (f.type === 'Any' ? 'Any Type' : f.type),
+        kw: f.kw
+      });
+
+      const mode = document.getElementById('sortMode').value;
+      if(mode === 'nearest'){
+        list.sort((a,b)=> (b.zip?.slice(0,3)===f.zip.slice(0,3)) - (a.zip?.slice(0,3)===f.zip.slice(0,3)) || (b._score - a._score));
+      }else if(mode === 'recent'){
+        list.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+      }
+      render(list);
+
+      const n = [f.type!=='Any', !!f.zip, !!f.kw].filter(Boolean).length;
+      document.getElementById('activeFiltersCount').textContent = 'Active filters ('+n+')';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.with-other').forEach(sel => {
+        showHideOther(sel);
+        sel.addEventListener('change', () => showHideOther(sel));
+      });
+
+      document.getElementById('btn-search').addEventListener('click', search);
+
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        document.querySelectorAll('select').forEach(s => { s.value = 'Any'; showHideOther(s); });
+        document.querySelectorAll('.other-input').forEach(i => i.value='');
+        const zip = document.querySelector('input[data-k="zip"]'); if(zip) zip.value='';
+        document.getElementById('results').innerHTML='';
+        document.getElementById('matchCount').textContent='';
+        document.getElementById('activeFiltersCount').textContent='Active filters (0)';
+      });
+    });
+  })();
+  </script>
 </body>
 </html>
