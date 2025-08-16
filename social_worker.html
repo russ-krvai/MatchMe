@@ -4,13 +4,17 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Social Worker — StepDownMatch</title>
+
+  <!-- Light Canvas-style theme -->
   <link rel="stylesheet" href="style_light.css"/>
+
+  <!-- Supabase + your config + DB helper already in repo -->
   <script defer src="https://esm.sh/@supabase/supabase-js@2"></script>
   <script defer src="config.js"></script>
   <script defer src="supabase.js"></script>
-  <script defer src="sw_ui.js"></script>
 </head>
 <body>
+  <!-- Top bar -->
   <header class="appbar">
     <div class="brand">StepDownMatch — Social Worker</div>
     <nav>
@@ -19,14 +23,17 @@
       <a href="admin.html">Admin</a>
     </nav>
   </header>
+
   <main>
     <div class="grid">
+      <!-- LEFT: Patient Details (filters) -->
       <aside class="card">
         <div class="filter-header">
           <h2>Patient Details</h2>
           <div class="muted" id="activeFiltersCount">Active filters (0)</div>
         </div>
 
+        <!-- Row 1 -->
         <div class="row">
           <div>
             <label>Target setting</label>
@@ -46,6 +53,7 @@
           </div>
         </div>
 
+        <!-- Row 2 -->
         <div class="row">
           <div>
             <label>Payer</label>
@@ -63,6 +71,7 @@
           </div>
         </div>
 
+        <!-- Row 3 -->
         <div class="row">
           <div>
             <label>IV antibiotics</label>
@@ -80,6 +89,7 @@
           </div>
         </div>
 
+        <!-- Row 4 -->
         <div class="row">
           <div>
             <label>Feeding tube</label>
@@ -97,6 +107,7 @@
           </div>
         </div>
 
+        <!-- Row 5 -->
         <div class="row">
           <div>
             <label>Dialysis</label>
@@ -114,6 +125,7 @@
           </div>
         </div>
 
+        <!-- Row 6 -->
         <div class="row">
           <div>
             <label>Central line</label>
@@ -131,6 +143,7 @@
           </div>
         </div>
 
+        <!-- Row 7 -->
         <div class="row">
           <div>
             <label>Mobility</label>
@@ -154,6 +167,7 @@
         </div>
       </aside>
 
+      <!-- RIGHT: Results -->
       <section class="card">
         <div class="filter-header">
           <h2>Matching facilities <span id="matchCount" class="muted"></span></h2>
@@ -170,5 +184,103 @@
       </section>
     </div>
   </main>
+
+  <!-- Page logic: “Other” reveals text box + Supabase search via your existing DB helper -->
+  <script>
+  (function(){
+    function showHideOther(select){
+      const other = select.parentElement.querySelector('.other-input');
+      if(!other) return;
+      other.style.display = (select.value === 'Other') ? 'block' : 'none';
+      if(select.value !== 'Other') other.value = '';
+    }
+
+    function collectFilters(){
+      const pane = document.querySelector('aside');
+      const selects = Array.from(pane.querySelectorAll('select'));
+      const data = { type:'Any', zip:'', kw:[] };
+
+      const typeSel = pane.querySelector('select[data-k="type"]');
+      if(typeSel) data.type = typeSel.value || 'Any';
+
+      const zipIn = pane.querySelector('input[data-k="zip"]');
+      if(zipIn) data.zip = zipIn.value.trim();
+
+      selects.forEach(sel => {
+        if(sel.hasAttribute('data-k')) return;
+        const val = sel.value;
+        if(val === 'Other'){
+          const other = sel.parentElement.querySelector('.other-input');
+          if(other && other.value.trim()) data.kw.push(other.value.trim());
+        }else if(val && val !== 'Any'){
+          data.kw.push(val);
+        }
+      });
+
+      return { type: data.type, zip: data.zip, kw: data.kw.join(' ') };
+    }
+
+    function render(list){
+      const out = document.getElementById('results');
+      const count = document.getElementById('matchCount');
+      out.innerHTML = '';
+      count.textContent = list.length ? '(' + list.length + ')' : '';
+      if(!list.length){
+        out.innerHTML = '<div class="muted">No facilities matched the current criteria.</div>';
+        return;
+      }
+      list.forEach(m => {
+        const el = document.createElement('div'); el.className='facility';
+        el.innerHTML =
+          '<div><strong>'+m.name+'</strong>' +
+          '<div class="meta"><span class="badge">'+m.type+'</span> ZIP '+(m.zip||'')+'</div>' +
+          '<div class="meta">Dialysis: '+(m.dialysis||'—')+' • Behavior: '+(m.behavior||'—')+
+          ' • Tube: '+(m.tube||'—')+' • IV: '+(m.iv||'—')+' • WoundVac: '+(m.woundVac||'—')+' • TPN: '+(m.tpn||'—')+'</div>' +
+          '<div class="meta">Insurances: '+(m.insurances||'—')+'</div>' +
+          '<div class="meta">Notes: '+(m.notes||'—')+'</div>' +
+          '</div><div class="score">'+(m._score||0)+'</div>';
+        out.appendChild(el);
+      });
+    }
+
+    async function search(){
+      const f = collectFilters();
+      let list = await DB.fetchFacilities({
+        zip: f.zip,
+        type: (f.type === 'Any' ? 'Any Type' : f.type),
+        kw: f.kw
+      });
+
+      const mode = document.getElementById('sortMode').value;
+      if(mode === 'nearest'){
+        list.sort((a,b)=> (b.zip?.slice(0,3)===f.zip.slice(0,3)) - (a.zip?.slice(0,3)===f.zip.slice(0,3)) || (b._score - a._score));
+      }else if(mode === 'recent'){
+        list.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+      }
+      render(list);
+
+      const n = [f.type!=='Any', !!f.zip, !!f.kw].filter(Boolean).length;
+      document.getElementById('activeFiltersCount').textContent = 'Active filters ('+n+')';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.with-other').forEach(sel => {
+        showHideOther(sel);
+        sel.addEventListener('change', () => showHideOther(sel));
+      });
+
+      document.getElementById('btn-search').addEventListener('click', search);
+
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        document.querySelectorAll('select').forEach(s => { s.value = 'Any'; showHideOther(s); });
+        document.querySelectorAll('.other-input').forEach(i => i.value='');
+        const zip = document.querySelector('input[data-k="zip"]'); if(zip) zip.value='';
+        document.getElementById('results').innerHTML='';
+        document.getElementById('matchCount').textContent='';
+        document.getElementById('activeFiltersCount').textContent='Active filters (0)';
+      });
+    });
+  })();
+  </script>
 </body>
 </html>
